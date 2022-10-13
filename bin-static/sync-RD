@@ -21,11 +21,10 @@ fi
 SCRIPT_HOME=scripthome
 SCRIPT_ME=$(readlink -f "${SCRIPT_HOME}")
 ENV_LOC=$(readlink -f "${SCRIPT_HOME}")
-PROJECT_NAME=$(basename `cd $PROJECT_DIR && git rev-parse --show-toplevel`)
 
 source $ENV_LOC/.env
-echo -e "\nReading .env from ---> $ENV_LOC/.env"
 PROJECT_NAME=$(basename `cd $PROJECT_DIR && git rev-parse --show-toplevel`)
+echo -e "\nReading .env from ---> $ENV_LOC/.env"
 echo "PROJECT : $PROJECT_NAME"
 
 DIR_SOURCE="$PROJECT_DIR/"
