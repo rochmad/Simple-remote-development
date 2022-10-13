@@ -50,7 +50,7 @@ fi
 SCR_LS=($(ls $SCRIPT_ME/bin-static | sort))
 mkdir -p $SCRIPT_ME/bin/
 for i in ${SCR_LS[*]}; do
-    cp -u $SCRIPT_ME/bin-static/$i $SCRIPT_ME/bin/$PROJECT_NAME-$i
+    cp $SCRIPT_ME/bin-static/$i $SCRIPT_ME/bin/$PROJECT_NAME-$i
     echo -e "configuring binary script $SCRIPT_ME/bin/$PROJECT_NAME-$i\n"
     chmod a+x $SCRIPT_ME/bin/$PROJECT_NAME-$i
     if [[ "$distribution" =~ "Debian" || "$distribution" =~ "Ubuntu" ]]; then
@@ -160,21 +160,11 @@ SPV_PROJECT_CONF(){
         echo -e "[unix_http_server]\nchmod=0777; sockef file mode (default 0700)\n"
         SED_COMMAND="sudo sed -i" 
         RD_SPV_CONF_LOC="/etc/supervisor/conf.d/"
-        sudo sed -i "s|=0700|=0777|g" /etc/supervisor/supervisord.conf
+        $SED_COMMAND "s|=0700|=0777|g" /etc/supervisor/supervisord.conf
 
         echo -e "reconfiguring supervisor $PROJECT_NAME-sync-rd"
         sudo cp rd-supervisor.conf $RD_SPV_CONF_LOC/$PROJECT_NAME-rd-supervisor.conf
-        # sudo sed -i "s|projectrunname|$PROJECT_NAME-sync-RD|g" /etc/supervisor/conf.d/$PROJECT_NAME-rd-supervisor.conf
-        # sudo sed -i "s|projectrunscript|$SCRIPT_ME/bin/$PROJECT_NAME-sync-RD|g" /etc/supervisor/conf.d/$PROJECT_NAME-rd-supervisor.conf
-        # sudo sed -i "s|projectname|$PROJECT_NAME|g" /etc/supervisor/conf.d/$PROJECT_NAME-rd-supervisor.conf
-        # sudo sed -i "s|projecthome|$PROJECT_DIR|g" /etc/supervisor/conf.d/$PROJECT_NAME-rd-supervisor.conf
-        # sudo sed -i "s|projectdirectory|$SCRIPT_ME|g" /etc/supervisor/conf.d/$PROJECT_NAME-rd-supervisor.conf
-        # sudo sed -i "s|scripthome|$SCRIPT_ME|g" /etc/supervisor/conf.d/$PROJECT_NAME-rd-supervisor.conf
         SED_CONF
-        # DSO_HOME
-        # USER_INSTALL=$USER
-        # sudo sed -i "s|runneruser|$USER_INSTALL|g" /etc/supervisor/conf.d/$PROJECT_NAME-rd-supervisor.conf
-
         SPV_RELOAD
         SPV_PROJECT_RELOAD
         echo -e "\ndone installing "
@@ -186,20 +176,12 @@ SPV_PROJECT_CONF(){
         echo -e "reconfiguring supervisor $PROJECT_NAME-sync-rd"
         SED_COMMAND="sudo sed -i '' " 
         RD_SPV_CONF_LOC="/usr/local/etc/supervisor/conf.d/"
-        $SED_COMMAND '' "s|=0700|=0777|g" /usr/local/etc/supervisor/supervisord.conf
+        $SED_COMMAND "s|=0700|=0777|g" /usr/local/etc/supervisor/supervisord.conf
         # sleep 5
 
         echo -e "configuring $RD_SPV_CONF_LOC/$PROJECT_NAME-rd-supervisor.conf"
         sudo cp rd-supervisor.conf $RD_SPV_CONF_LOC/$PROJECT_NAME-rd-supervisor.conf
-        # sudo sed -i '' "s|projectrunname|$PROJECT_NAME-sync-RD|g" /usr/local/etc/supervisor/conf.d/$PROJECT_NAME-rd-supervisor.conf
-        # sudo sed -i "s|projectrunscript|$SCRIPT_ME/bin/$PROJECT_NAME-sync-RD|g" /etc/supervisor/conf.d/$PROJECT_NAME-rd-supervisor.conf
-        # sudo sed -i '' "s|projecthome|$PROJECT_DIR|g" /usr/local/etc/supervisor/conf.d/$PROJECT_NAME-rd-supervisor.conf
-        # sudo sed -i "s|projectdirecotry|$SCRIPT_ME|g" /etc/supervisor/conf.d/$PROJECT_NAME-rd-supervisor.conf
-
-        # USER_INSTALL=$USER
-        # sudo sed -i '' "s|runneruser|$USER_INSTALL|g" /usr/local/etc/supervisor/conf.d/$PROJECT_NAME-rd-supervisor.conf
-
-
+        SED_CONF
         SPV_RELOAD
         SPV_PROJECT_RELOAD
 

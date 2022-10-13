@@ -20,4 +20,4 @@ defscrollback 100000
 
 hardstatus ignore
 
-#chdir "$HOME/dso4"
+#chdir "$HOME/srd"

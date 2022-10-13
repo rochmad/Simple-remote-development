@@ -31,7 +31,7 @@ make_new_screen(){
 			else
 				sleep 3
 			fi
-			#  screen -dR Rochmads.a bash -c 'cd ~/dso4; bash'
+			#  screen -dR Rochmads.a bash -c 'cd ~/srd4; bash'
 			screen -dR $TTY_NOW.$NAME bash -c "cd $DIR_DEST; bash"
 			exit
 		else
@@ -41,7 +41,7 @@ make_new_screen(){
 			else
 				sleep 3
 			fi
-			#  screen -dR Rochmads.a bash -c 'cd ~/dso4; bash'
+			#  screen -dR Rochmads.a bash -c 'cd ~/srd4; bash'
 			screen -dR $TTY_NOW.$NAME bash -c "cd $DIR_DEST; bash"
 		fi
 	exit

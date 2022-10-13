@@ -31,7 +31,7 @@ OS SUPPORT:
 export RD_SSH_PORT="22"  #port destinasi
 export RD_SSH_USER="root" #user untuk untuk login ke server
 export RD_ID_RSA="~/.ssh/id_rsa-remote" #id rsa untuk kebutuhan passwordless
-export RD_DIR_DESTIANTION="~/dso4" #remote direktory, lokasi directory di server yang akan digunakan sebagai destiantion source code
+export RD_DIR_DESTIANTION="~/srd" #remote direktory, lokasi directory di server yang akan digunakan sebagai destiantion source code
 ```
     `nano .env`
 2. eksekusi `./install.sh`
@@ -41,16 +41,16 @@ export RD_DIR_DESTIANTION="~/dso4" #remote direktory, lokasi directory di server
 	membuat env variable untuk digunakan langsung di shell local
 3. setelha install , mudah untuk eksekusi langsung dari bash, dan tanpa path
     contoh:
-    rochmads@localhost:~/dso2$ `$PROJECT_NAME-connect-RD` #remote ssh
-    rochmads@localhost:~/dso2$ `$PROJECT_NAME-sync-RD`  #sync manual local-server
-	rochmads@localhost:~/dso2$ `$PROJECT_NAME-sync-RD-log` #log dari supervisorctl tail -f $PROJECT_NAME-sync-rd
-	rochmads@localhost:~/dso2$ `$PROJECT_NAME-sync-RD-log-restart` # jika ingin menjalankan `$PROJECT_NAME-sync-rd` tanpa melalui `$PROJECT_NAME-connect-rd`
-	rochmads@localhost:~/dso2$ `$PROJECT_NAME-sync-RD-log-stop` # jika ingin memberhentikan `$PROJECT_NAME-sync-rd` jika sebelumnya melakukan `$PROJECT_NAME-sync-RD-log-restart`
+    rochmads@localhost:~/srd$ `$PROJECT_NAME-connect-RD` #remote ssh
+    rochmads@localhost:~/srd$ `$PROJECT_NAME-sync-RD`  #sync manual local-server
+	rochmads@localhost:~/srd$ `$PROJECT_NAME-sync-RD-log` #log dari supervisorctl tail -f $PROJECT_NAME-sync-rd
+	rochmads@localhost:~/srd$ `$PROJECT_NAME-sync-RD-log-restart` # jika ingin menjalankan `$PROJECT_NAME-sync-rd` tanpa melalui `$PROJECT_NAME-connect-rd`
+	rochmads@localhost:~/srd$ `$PROJECT_NAME-sync-RD-log-stop` # jika ingin memberhentikan `$PROJECT_NAME-sync-rd` jika sebelumnya melakukan `$PROJECT_NAME-sync-RD-log-restart`
 
 ## Cara kerja
 	saat membuka intellej idea / vscode, user akan diarahkan langsung untuk menjalankan `$PROJECT_NAME-connect-RD`
 	saat menjalankan `$PROJECT_NAME-connect-RD` local development akan menjalankan `$PROJECT_NAME-sync-RD` secara background melalui supervisor untuk meakukan sync otomatis ke server,  
-	setiap pengubahan di file yang di tunjukan (dso2) akan sync otomatis ke server, 
+	setiap pengubahan di file yang di tunjukan (srd) akan sync otomatis ke server, 
 
 Note:
 - dikarenakan $PROJECT_NAME total file 2gb, membutuhkan waktu untuk pertama kali syncronize, (tunggu sampai bertuliskan `done first syncronizing $PROJECT_NAME` pada supervisorctl atau `$PROJECT_NAME-sync-RD-log`)
