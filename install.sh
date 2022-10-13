@@ -9,6 +9,11 @@ if [ ! -z $DEBUG ]; then
     set -x
 fi
 
+if [ ! -f .env ] ; then
+    cp .env.example .env
+    echo -e "copy .env.example to .env"
+fi
+
 source $PWD/.env
 echo -e "\nReading .env from ---> $PWD/.env"
 # eval $(cat $PWD/.env)
@@ -37,11 +42,6 @@ else
     distribution=$(uname)
 fi
 
-if [ ! -f .env ] ; then
-    cp .env.example .env
-    echo -e "copy .env.example to .env"
-fi
-
 if ! sudo echo ; then
     echo -e "Please provide root password"
     exit
@@ -67,13 +67,13 @@ for i in ${SCR_LS[*]}; do
 
 SUPERVISOR_SCRIPT(){
     if [[ "$distribution" =~ "Debian" || "$distribution" =~ "Ubuntu" ]]; then
-                sed -i "/\#$PROJECT_NAME-Remote_Development-SCRIPT/a alias $PROJECT_NAME-sync-RD-log='supervisorctl tail -f $PROJECT_NAME-sync-rd'" $SHELL_S
-                sed -i "/\#$PROJECT_NAME-Remote_Development-SCRIPT/a alias $PROJECT_NAME-sync-RD-log-restart='supervisorctl restart $PROJECT_NAME-sync-rd'" $SHELL_S
-                sed -i "/\#$PROJECT_NAME-Remote_Development-SCRIPT/a alias $PROJECT_NAME-sync-RD-log-stop='supervisorctl stop $PROJECT_NAME-sync-rd'" $SHELL_S
+                sed -i "/\#$PROJECT_NAME-Remote_Development-SCRIPT/a alias $PROJECT_NAME-sync-RD-log='supervisorctl tail -f $PROJECT_NAME-sync-RD'" $SHELL_S
+                sed -i "/\#$PROJECT_NAME-Remote_Development-SCRIPT/a alias $PROJECT_NAME-sync-RD-log-restart='supervisorctl restart $PROJECT_NAME-sync-RD'" $SHELL_S
+                sed -i "/\#$PROJECT_NAME-Remote_Development-SCRIPT/a alias $PROJECT_NAME-sync-RD-log-stop='supervisorctl stop $PROJECT_NAME-sync-RD'" $SHELL_S
     elif [ "$distribution" == "Darwin" ]; then
-                echo -e  "alias $PROJECT_NAME-sync-RD-log='supervisorctl tail -f $PROJECT_NAME-sync-rd'" >> $SHELL_S
-                echo -e  "alias $PROJECT_NAME-sync-RD-log-restart='supervisorctl restart $PROJECT_NAME-sync-rd'" >>  $SHELL_S
-                echo -e  "alias $PROJECT_NAME-sync-RD-log-stop='supervisorctl stop $PROJECT_NAME-sync-rd'" >> $SHELL_S
+                echo -e  "alias $PROJECT_NAME-sync-RD-log='supervisorctl tail -f $PROJECT_NAME-sync-RD'" >> $SHELL_S
+                echo -e  "alias $PROJECT_NAME-sync-RD-log-restart='supervisorctl restart $PROJECT_NAME-sync-RD'" >>  $SHELL_S
+                echo -e  "alias $PROJECT_NAME-sync-RD-log-stop='supervisorctl stop $PROJECT_NAME-sync-RD'" >> $SHELL_S
         echo "darwin"
     fi
 }
@@ -128,18 +128,18 @@ elif [ "$distribution" == "Darwin" ]; then
 fi
 
 SPV_RELOAD(){
-            echo -e "reloading supervisor $PROJECT_NAME-sync-rd"
+            echo -e "reloading supervisor $PROJECT_NAME-sync-RD"
             sudo supervisorctl reread &> /dev/null
             sudo supervisorctl update &> /dev/null
 }
 
 SPV_PROJECT_RELOAD(){
-            if ! sudo supervisorctl restart $PROJECT_NAME-sync-rd &> /dev/null; then
-                echo -e "command \"sudo supervisorctl restart $PROJECT_NAME-sync-rd\"\t failed to run, please check\n"
-                sudo supervisorctl restart $PROJECT_NAME-sync-rd &> /dev/null
+            if ! sudo supervisorctl restart $PROJECT_NAME-sync-RD &> /dev/null; then
+                echo -e "command \"sudo supervisorctl restart $PROJECT_NAME-sync-RD\"\t failed to run, please check\n"
+                sudo supervisorctl restart $PROJECT_NAME-sync-RD &> /dev/null
             else
-                sudo supervisorctl stop $PROJECT_NAME-sync-rd &> /dev/null
-                echo -e "command \"sudo supervisorctl start $PROJECT_NAME-sync-rd\"\t success ...(y)\n"
+                sudo supervisorctl stop $PROJECT_NAME-sync-RD &> /dev/null
+                echo -e "command \"sudo supervisorctl start $PROJECT_NAME-sync-RD\"\t success ...(y)\n"
             fi
 }
 
@@ -162,7 +162,7 @@ SPV_PROJECT_CONF(){
         RD_SPV_CONF_LOC="/etc/supervisor/conf.d/"
         $SED_COMMAND "s|=0700|=0777|g" /etc/supervisor/supervisord.conf
 
-        echo -e "reconfiguring supervisor $PROJECT_NAME-sync-rd"
+        echo -e "reconfiguring supervisor $PROJECT_NAME-sync-RD"
         sudo cp rd-supervisor.conf $RD_SPV_CONF_LOC/$PROJECT_NAME-rd-supervisor.conf
         SED_CONF
         SPV_RELOAD
@@ -173,7 +173,7 @@ SPV_PROJECT_CONF(){
         echo -e "supervisor already installed"
         echo -e "make sure \"chmod=0777\" in /usr/local/etc/supervisor/supervisord.conf"
         echo -e "[unix_http_server]\nchmod=0777; sockef file mode (default 0700)\n"
-        echo -e "reconfiguring supervisor $PROJECT_NAME-sync-rd"
+        echo -e "reconfiguring supervisor $PROJECT_NAME-sync-RD"
         SED_COMMAND="sudo sed -i '' " 
         RD_SPV_CONF_LOC="/usr/local/etc/supervisor/conf.d/"
         $SED_COMMAND "s|=0700|=0777|g" /usr/local/etc/supervisor/supervisord.conf
