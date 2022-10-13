@@ -1,0 +1,150 @@
+#!/bin/bash
+### Author
+### Rochmad saputra
+### rochmadsaputra@gmail.com
+
+echo "PID of this script: $$"
+MY_PID=$$
+
+if [ ! -z $DEBUG ]; then
+    set -x
+fi
+
+if lsb_release -is &> /dev/null; then
+    distribution=$(lsb_release -is)
+else
+    distribution=$(uname)
+fi
+
+SCRIPT_HOME=scripthome
+SCRIPT_ME=$(dirname -- "$(readlink -f "${BASH_SOURCE}")")
+ENV_LOC=$(dirname -- "$(readlink -f "$SCRIPT_ME")")
+source $ENV_LOC/.env
+PROJECT_NAME=$(basename `cd $PROJECT_DIR && git rev-parse --show-toplevel`)
+echo -e "\nReading .env from ---> $ENV_LOC/.env"
+echo "PROJECT : $PROJECT_NAME"
+
+DIR_SOURCE="$PROJECT_DIR"
+DIR_DEST="$RD_DIR_DESTIANTION"
+SSH_IP=$RD_SSH_IP
+SSH_PORT=$RD_SSH_PORT
+SSH_USER=$RD_SSH_USER
+SSH_RSA=$RD_ID_RSA
+# BEFORE_COMMAND="SCR_ATT=$(screen -ls | grep $PROJECT_NAME | grep -s "Attached"); if [ -z $SCR_ATT ]; then; echo "ok"  "
+REMOTE_COMMAND="~/.RD-screen-checker $PROJECT_NAME $DIR_DEST"
+
+
+if ! sudo echo ; then
+    exit
+fi
+
+
+if ! nc -z -w 10 -v $SSH_IP $SSH_PORT &> /dev/null ; then
+    echo "Can't connect  $SSH_IP $SSH_PORT, please check internet conection or server "
+	exit
+fi
+
+
+SPV_RELOAD(){
+            echo -e "reloading supervisor $PROJECT_NAME-sync-RD"
+            sudo supervisorctl reread &> /dev/null
+            sudo supervisorctl update &> /dev/null
+}
+
+SPV_PROJECT_RELOAD(){
+            if sudo supervisorctl start $PROJECT_NAME-sync-RD &> /dev/null; then
+                if ! sudo supervisorctl restart $PROJECT_NAME-sync-RD &> /dev/null; then
+                    echo -e "command \"sudo supervisorctl restart $PROJECT_NAME-sync-RD\"\t failed to run, please check\n"
+                fi
+            else
+                exit
+                sudo supervisorctl stop $PROJECT_NAME-sync-RD &> /dev/null
+                echo -e "command \"sudo supervisorctl start $PROJECT_NAME-sync-RD\"\t success ...(y)\n"
+            fi
+            
+}
+
+if [[ "$distribution" =~ "Debian" || "$distribution" =~ "Ubuntu" ]]; then
+    SPV_RELOAD
+    SPV_PROJECT_RELOAD
+elif [ "$distribution" == "Darwin" ]; then
+    # echo "darwin"
+    # DSO_SYNC_RD_PATH=$(which $PROJECT_NAME-sync-RD)
+    # $DSO_SYNC_RD_PATH & &> /dev/null
+    # DSO_SYNC_RD_PATH_PID=$!
+    SPV_RELOAD
+    SPV_PROJECT_RELOAD
+fi
+
+if ! ps -ef | grep ssh | grep 8080 &> /dev/null; then
+    if nc -z -w 1 -v 127.0.0.1 8080 &> /dev/null ; then
+        echo -e "\nCant fowarding port, port 8080 in use\n"
+        else
+        ssh -L 8080:127.0.0.1:8080 -N -i $SSH_RSA $SSH_USER@$SSH_IP -p $SSH_PORT &  
+        SSH_TUNNEL_PID=$!
+        echo -e "Fowarding port, from port from $SSH_IP:8080 to localhost \n"
+    fi
+fi
+
+if [[ "$distribution" =~ "Debian" || "$distribution" =~ "Ubuntu" ]]; then
+    echo -e "Conecting Remote Development $SSH_USER@$SSH_IP -p $SSH_PORT\n "
+    # rsync -e "ssh -p $SSH_PORT -i $SSH_RSA" -az  "$DIR_SOURCE/etc/script/remote-development/.screenrc" "$SSH_USER@$SSH_IP:~/.screenrc" & &> /dev/null
+    # rsync -e "ssh -p $SSH_PORT -i $SSH_RSA" -az  "$DIR_SOURCE/etc/script/remote-development/RD-screen-checker.sh" "$SSH_USER@$SSH_IP:~/.RD-screen-checker" & &> /dev/null
+    if [ ! -z $DEBUG ]; then
+        sleep 10
+    else
+        sleep 3
+    fi
+    # autossh -t $SSH_USER@$SSH_IP -p $SSH_PORT -i $SSH_RSA "chdir $DIR_DEST;  screen -dR rochmads bash -c 'cd $DIR_DEST; bash'"
+    # autossh -t $SSH_USER@$SSH_IP -p $SSH_PORT -i $SSH_RSA "~/.RD-screen-checker rochmads $DIR_DEST"
+    autossh -t $SSH_USER@$SSH_IP -p $SSH_PORT -i $SSH_RSA $REMOTE_COMMAND
+
+elif [ "$distribution" == "Darwin" ]; then
+    echo -e "Conecting Remote Development $SSH_USER@$SSH_IP -p $SSH_PORT\n "
+    if [ ! -z $DEBUG ]; then
+        sleep 10
+    else
+        sleep 3
+    fi
+    # ssh -o 'ControlMaster=auto'  -o'ControlPersist=20m' -o 'ControlPath=/tmp/.%r@%h-%p' -o "ServerAliveInterval=180" -o "ServerAliveCountMax=5" -t $SSH_USER@$SSH_IP -p $SSH_PORT -i $SSH_RSA "chdir $DIR_DEST;  screen -dR rochmads bash -c 'cd $DIR_DEST; bash'"
+    ssh -o 'ControlMaster=auto'  -o'ControlPersist=20m' -o 'ControlPath=/tmp/.%r@%h-%p' -o "ServerAliveInterval=180" -o "ServerAliveCountMax=5" -t $SSH_USER@$SSH_IP -p $SSH_PORT -i $SSH_RSA $REMOTE_COMMAND
+
+fi
+set -x
+# OTHER_RUN=$(ps -ef | grep "$PROJECT_NAME-connec[t]" | grep -v "$MY_PID")
+
+# if [[ -z $OTHER_RUN ]]; then
+#     echo "ok"
+#     if supervisorctl status $PROJECT_NAME-sync-RD &> /dev/null ; then
+#         supervisorctl stop $PROJECT_NAME-sync-RD &> /dev/null
+#         echo -e "stopping $PROJECT_NAME-sync-RD"
+#         if [ ! -z $SSH_TUNNEL_PID ]; then
+#             sudo kill $SSH_TUNNEL_PID &> /dev/null
+#         fi
+#         PID_SSH=$(ps -ef | grep ssh | grep 8080 | awk '{print $2}' )
+#         if [ ! -z $PID_SSH ]; then
+#             sudo kill $PID_SSH &> /dev/null
+#         fi
+#     fi
+# fi
+
+if ! ps -ef | grep "$PROJECT_NAME-connec[t]" | grep -v "$MY_PID" &> /dev/null; then
+    echo "ok"
+    if supervisorctl status $PROJECT_NAME-sync-RD &> /dev/null ; then
+        supervisorctl stop $PROJECT_NAME-sync-RD &> /dev/null
+        echo -e "stopping $PROJECT_NAME-sync-RD"
+        if [ ! -z $SSH_TUNNEL_PID ]; then
+            sudo kill $SSH_TUNNEL_PID &> /dev/null
+        fi
+        PID_SSH=$(ps -ef | grep ssh | grep 8080 | awk '{print $2}' )
+        if [ ! -z $PID_SSH ]; then
+            sudo kill $PID_SSH &> /dev/null
+        fi
+    fi
+fi
+
+if [ ! -z $DSO_SYNC_RD_PATH_PID ]; then
+    kill $DSO_SYNC_RD_PATH_PID &> /dev/null
+fi
+
+echo -e "disconecting from remote development... \nDone"

@@ -1,0 +1,115 @@
+
+#/bin/bash
+### Author
+### Rochmad saputra
+### rochmadsaputra@gmail.com
+
+echo "PID of this script: $$"
+MY_PID=$$
+
+if [ ! -z $DEBUG ]; then
+    set -x
+fi
+
+if lsb_release -is &> /dev/null; then
+    distribution=$(lsb_release -is)
+	# echo 65535 > /proc/sys/fs/inotify/max_user_watches 2>&1 > /dev/null
+else
+    distribution=$(uname)
+fi
+
+SCRIPT_HOME=scripthome
+SCRIPT_ME=$(readlink -f "${SCRIPT_HOME}")
+ENV_LOC=$(readlink -f "${SCRIPT_HOME}")
+PROJECT_NAME=$(basename `cd $PROJECT_DIR && git rev-parse --show-toplevel`)
+
+source $ENV_LOC/.env
+echo -e "\nReading .env from ---> $ENV_LOC/.env"
+PROJECT_NAME=$(basename `cd $PROJECT_DIR && git rev-parse --show-toplevel`)
+echo "PROJECT : $PROJECT_NAME"
+
+DIR_SOURCE="$PROJECT_DIR/"
+DIR_DEST="$RD_DIR_DESTIANTION"
+SSH_IP=$RD_SSH_IP
+SSH_PORT=$RD_SSH_PORT
+SSH_USER=$RD_SSH_USER
+SSH_RSA=$RD_ID_RSA
+
+
+if [ -z $PROJECT_NAME ]; then
+    echo "$PROJECT_NAME error or dint exist"
+    exit
+fi
+
+if [ -z $PROJECT_DIR ]; then
+    echo "$PROJECT_DIR error or dint exist"
+    exit
+fi
+
+if [ ! -f $ENV_LOC/.env ] ; then
+    cp $ENV_LOC/.env.example $ENV_LOC/.env
+    echo -e "copy .env.example to .env"
+fi
+
+
+# exit
+
+
+if [ ! -z $FRESH ]; then
+    set -x
+	echo -e "doing Fresh source on remote server done\n"
+	rsync -e "ssh -p $SSH_PORT -i $SSH_RSA" -avrz --stats  --exclude=*.swp  --exclude=*.lock "$DIR_SOURCE" "$SSH_USER@$SSH_IP:$DIR_DEST" --delete-after
+	echo -e "Fresh source on remote server done\n"
+	exit 
+fi
+
+init_sync(){
+	echo -e "init .....syncronizing"
+	rsync -e "ssh -p $SSH_PORT -i $SSH_RSA" -az  "$DIR_SOURCE/etc/script/remote-development/.screenrc" "$SSH_USER@$SSH_IP:~/.screenrc" &> /dev/null
+	rsync -e "ssh -p $SSH_PORT -i $SSH_RSA" -az  "$DIR_SOURCE/etc/script/remote-development/RD-screen-checker.sh" "$SSH_USER@$SSH_IP:~/.RD-screen-checker" &> /dev/null
+	while ! rsync -e "ssh -p $SSH_PORT -i $SSH_RSA" -avrz --stats  --exclude=*.swp  --exclude=*.lock "$DIR_SOURCE" "$SSH_USER@$SSH_IP:$DIR_DEST" 2>&1 > /dev/null ; do
+		echo "Sync ..."
+	done
+	echo -e "done init syncronizing PROJECT_NAME : $PROJECT_NAME \n"
+	echo -e "\nSyncronizing from -->> LOCAL DEV ( $DIR_SOURCE ) ---- to ---> $SSH_USER@$SSH_IP:$DIR_DEST\n\n"
+}
+
+
+if [[ "$distribution" =~ "Debian" || "$distribution" =~ "Ubuntu" ]]; then
+	init_sync
+
+	# while inotifywait -qr $DIR_SOURCE ; do
+	while inotifywait --excludei '/*.swp' -qre modify,attrib,move,close_write,create,delete,delete_self $DIR_SOURCE ; do
+
+		echo "starting Syncronizing"
+			while ! rsync -e "ssh -p $SSH_PORT -i $SSH_RSA" -avrz --exclude='*.swp' --exclude='*.lock' "$DIR_SOURCE" "$SSH_USER@$SSH_IP:$DIR_DEST"
+			do
+			echo "Try again"
+		echo "done Syncronizing"
+		done
+	done
+
+
+elif [ "$distribution" == "Darwin" ]; then
+	if ! which fswatch &> /dev/null; then
+		FSWATCH_EXEC="/usr/local/bin/fswatch"
+	else
+		FSWATCH_EXEC=$(which fswatch)
+	fi	
+	if [ ! -f $FSWATCH_EXEC ]; then
+		echo "FSWATCH NOT FOUND,"
+		exit
+	fi
+	init_sync
+	echo "$FSWATCH_EXEC"
+
+	while $FSWATCH_EXEC -1 --event-flags --exclude=".swp" --exclude=".lock" -t  -r $DIR_SOURCE | xargs ; do 
+		echo "starting Syncronizing"
+			while ! rsync -e "ssh -p $SSH_PORT -i $SSH_RSA" -avrz --exclude='*.swp' --exclude='*.lock' "$DIR_SOURCE" "$SSH_USER@$SSH_IP:$DIR_DEST"
+			do
+			echo "Try again"
+			done
+		echo "done Syncronizing"
+	done
+
+fi

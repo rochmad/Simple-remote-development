@@ -1,0 +1,63 @@
+# $PROJECT_NAME Remote Development (based on vscode remote development)
+Berdasarkan vscode remote development, namun untuk intellej idea dan bsa untuk smua code editor
+
+TOPOLOGI:
+[notebook] ---- [internet/vpn] --- [Server for remote development]
+
+---
+
+FEATURE:
+- Sync penuh antara directory local dengan remote server ($PROJECT_NAME-sync-RD)
+- Sync penuh dilakukan pada background proses ($PROJECT_NAME-connect-RD)
+- Port fowarding untuk 8080 ke local ($PROJECT_NAME-connect-RD)
+- Remote Shell for full seamless development ($PROJECT_NAME-connect-RD)
+- Remote Shell auto reconect & preserve last command ($PROJECT_NAME-connect-RD)q
+- Bin yang bisa di eksekusi langsung ($PROJECT_NAME-connect-RD,$PROJECT_NAME-connect-RD)
+---
+OS SUPPORT:
+1. 	MacOS
+2. 	Ubuntu
+3. 	Debian
+---
+
+## Cara penggunaan
+1. pindah ke directory etc/script/remote-development
+    `etc/script/remote-development`
+1. edit file `.env`, dan sesuaikan dengan tujuan server remote
+	pastikan mempunyai `id_rsa` yang auto conect tanpa memasukan passphrase
+    export RD_SSH_IP="10.100.110.13"
+```
+###ServerRemote Development, 
+export RD_SSH_PORT="22"  #port destinasi
+export RD_SSH_USER="root" #user untuk untuk login ke server
+export RD_ID_RSA="~/.ssh/id_rsa-remote" #id rsa untuk kebutuhan passwordless
+export RD_DIR_DESTIANTION="~/dso4" #remote direktory, lokasi directory di server yang akan digunakan sebagai destiantion source code
+```
+    `nano .env`
+2. eksekusi `./install.sh`
+    `./install.sh`
+    akan menginstall supervisor, nc, rysnc, inotify-tool
+    dan akan membuat daemon di supervisorctl dengan nama $PROJECT_NAME-sync-rd
+	membuat env variable untuk digunakan langsung di shell local
+3. setelha install , mudah untuk eksekusi langsung dari bash, dan tanpa path
+    contoh:
+    rochmads@localhost:~/dso2$ `$PROJECT_NAME-connect-RD` #remote ssh
+    rochmads@localhost:~/dso2$ `$PROJECT_NAME-sync-RD`  #sync manual local-server
+	rochmads@localhost:~/dso2$ `$PROJECT_NAME-sync-RD-log` #log dari supervisorctl tail -f $PROJECT_NAME-sync-rd
+	rochmads@localhost:~/dso2$ `$PROJECT_NAME-sync-RD-log-restart` # jika ingin menjalankan `$PROJECT_NAME-sync-rd` tanpa melalui `$PROJECT_NAME-connect-rd`
+	rochmads@localhost:~/dso2$ `$PROJECT_NAME-sync-RD-log-stop` # jika ingin memberhentikan `$PROJECT_NAME-sync-rd` jika sebelumnya melakukan `$PROJECT_NAME-sync-RD-log-restart`
+
+## Cara kerja
+	saat membuka intellej idea / vscode, user akan diarahkan langsung untuk menjalankan `$PROJECT_NAME-connect-RD`
+	saat menjalankan `$PROJECT_NAME-connect-RD` local development akan menjalankan `$PROJECT_NAME-sync-RD` secara background melalui supervisor untuk meakukan sync otomatis ke server,  
+	setiap pengubahan di file yang di tunjukan (dso2) akan sync otomatis ke server, 
+
+Note:
+- dikarenakan $PROJECT_NAME total file 2gb, membutuhkan waktu untuk pertama kali syncronize, (tunggu sampai bertuliskan `done first syncronizing $PROJECT_NAME` pada supervisorctl atau `$PROJECT_NAME-sync-RD-log`)
+- untuk debuging, bsa memakai `DEBUG=OK` pada semua perintah, contoh `DEBUG OK $PROJECT_NAME-connect-RD`
+- untuk membersihkan source ditarget (remote sever), bsa memakai `FRESH=OK` pada semua perintah, contoh `FRESH=OK $PROJECT_NAME-sync-RD`
+
+---
+Author
+Rochmad saputra
+rochmadsaputra@gmail.com
