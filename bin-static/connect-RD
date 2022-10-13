@@ -34,6 +34,7 @@ SSH_RSA=$RD_ID_RSA
 REMOTE_COMMAND="~/.RD-screen-checker $PROJECT_NAME $DIR_DEST"
 
 
+echo "please provide sudo password"
 if ! sudo echo ; then
     exit
 fi

@@ -42,6 +42,7 @@ else
     distribution=$(uname)
 fi
 
+echo "please provide sudo password"
 if ! sudo echo ; then
     echo -e "Please provide root password"
     exit
@@ -84,7 +85,7 @@ SH_SCRIPT(){
         sed -i "/\#$PROJECT_NAME-Remote_Development-SCRIPT/a export $PROJECT_NAME"_DIR"="$PROJECT_DIR"" $SHELL_S
         SUPERVISOR_SCRIPT
     elif [ "$distribution" == "Darwin" ]; then
-        echo -e  "export PATH=\$PATH:$PROJECT_DIR"  >> $SHELL_S
+        echo -e  "export PATH=\$PATH:$PWD/bin"  >> $SHELL_S
         echo -e  "export $PROJECT_NAME"_DIR"="$PROJECT_DIR"" >>  $SHELL_S
         SUPERVISOR_SCRIPT
     fi
